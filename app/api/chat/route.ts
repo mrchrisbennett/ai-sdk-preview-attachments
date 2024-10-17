@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from '@ai-sdk/anthropic';
 import { convertToCoreMessages, streamText } from "ai";
 
 export async function POST(req: Request) {
