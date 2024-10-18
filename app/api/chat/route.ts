@@ -21,7 +21,13 @@ I need to extract key information from this legal text. I'll use the legal_extra
 Now that I have the extracted information, I can analyze it and provide a summary to the user.
 </thinking>
 
-After using the tool, output the result.
+Also, before using any tools, think through a plan and outline which tools you will need to use. Proceed using one tool at a time. After each tool use, ask the user if they would like to continue using tools or if they would like to stop or proceed.
+
+The plan should look like this (but include however many steps you need):
+
+1. Step 1
+2. Step 2
+3. Step 3
 
 Always use <thinking> tags to show your reasoning process before taking any action or providing a response.`;
 
