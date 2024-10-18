@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { StreamingTextResponse, Message } from 'ai';
-import { AnthropicStream, AnthropicStreamCallbacks } from 'ai';
+import { AnthropicStream } from 'ai';
 import { tools, handleToolUse } from '../../../src/utils/agent';
 
 const anthropic = new Anthropic({
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     let isCollectingToolCall = false;
     let shouldSkipTokens = false;
 
-    const callbacks: AnthropicStreamCallbacks = {
+    const callbacks = {
       onStart: () => {
         console.log("Stream started");
       },
