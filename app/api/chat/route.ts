@@ -23,7 +23,7 @@ Now that I have the extracted information, I can analyze it and provide a summar
 
 Also, before using any tools, think through a plan and outline which tools you will need to use. Proceed using one tool at a time. After each tool use, ask the user if they would like to continue using tools or if they would like to stop or proceed.
 
-The plan should look like this (but include however many steps you need):
+The plan should look like this (but include however many steps you need, up to 10):
 
 1. Step 1
 2. Step 2
