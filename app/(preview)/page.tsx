@@ -145,7 +145,7 @@ export default function Home() {
 
   return (
     <div
-      className="flex flex-row justify-center pb-20 h-dvh bg-white dark:bg-zinc-900"
+      className="flex flex-row justify-center pb-8 h-dvh bg-white dark:bg-zinc-900"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -172,7 +172,7 @@ export default function Home() {
             {messages.map((message, index) => (
               <motion.div
                 key={message.id}
-                className={`flex flex-row gap-2 px-4 w-full md:w-[500px] md:px-0 ${
+                className={`flex flex-row gap-2 px-4 w-full md:w-[600px] md:px-0 ${
                   index === 0 ? "pt-20" : ""
                 }`}
                 initial={{ y: 5, opacity: 0 }}
@@ -208,7 +208,7 @@ export default function Home() {
 
             {isLoading &&
               messages[messages.length - 1].role !== "assistant" && (
-                <div className="flex flex-row gap-2 px-4 w-full md:w-[500px] md:px-0">
+                <div className="flex flex-row gap-2 px-4 w-full md:w-[600px] md:px-0">
                   <div className="size-[24px] flex flex-col justify-center items-center flex-shrink-0 text-zinc-400">
                     <BotIcon />
                   </div>
@@ -221,7 +221,7 @@ export default function Home() {
             <div ref={messagesEndRef} />
           </div>
         ) : (
-          <motion.div className="h-[350px] px-4 w-full md:w-[500px] md:px-0 pt-20">
+          <motion.div className="h-[350px] px-4 w-full md:w-[600px] md:px-0 pt-20">
             <div className="border rounded-lg p-6 flex flex-col gap-4 text-zinc-500 text-sm dark:text-zinc-400 dark:border-zinc-700">
               <p className="flex flex-row justify-center gap-4 items-center text-zinc-900 dark:text-zinc-50">
                 <VercelIcon />
@@ -260,7 +260,7 @@ export default function Home() {
         >
           <AnimatePresence>
             {files && files.length > 0 && (
-              <div className="flex flex-row gap-2 absolute bottom-12 px-4 w-full md:w-[500px] md:px-0">
+              <div className="flex flex-row gap-2 absolute bottom-12 px-4 w-full md:w-[600px] md:px-0">
                 {Array.from(files).map((file) =>
                   file.type.startsWith("image") ? (
                     <div key={file.name}>

@@ -29,6 +29,10 @@ The plan should look like this (but include however many steps you need):
 2. Step 2
 3. Step 3
 
+When using the missing_clause_detector tool, make sure to specify the contract type based on the context of the legal document being analyzed.
+
+You can use the todo_manager tool to keep track of tasks or follow-up items that come up during the conversation. Use it to add, list, or remove todo items as needed.
+
 Always use <thinking> tags to show your reasoning process before taking any action or providing a response.`;
 
 export async function POST(req: Request) {

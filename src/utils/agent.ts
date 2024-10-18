@@ -1,4 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
+import fs from 'fs/promises';
+import path from 'path';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -143,6 +145,31 @@ export const tools: Tool[] = [
       },
       required: ["text"]
     }
+  },
+  {
+    name: "missing_clause_detector",
+    description: "Identify missing clauses based on the type of legal contract.",
+    input_schema: {
+      type: "object",
+      properties: {
+        text: { type: "string", description: "The full text of the legal contract" },
+        contract_type: { type: "string", description: "The type of legal contract (e.g., 'employment', 'lease', 'sale')" }
+      },
+      required: ["text", "contract_type"]
+    }
+  },
+  {
+    name: "todo_manager",
+    description: "Add, list, or remove todo items for follow-up or future reference.",
+    input_schema: {
+      type: "object",
+      properties: {
+        action: { type: "string", description: "The action to perform: 'add', 'list', or 'remove'" },
+        item: { type: "string", description: "The todo item to add or remove (required for 'add' and 'remove' actions)" },
+        id: { type: "string", description: "The ID of the todo item to remove (required for 'remove' action)" }
+      },
+      required: ["action"]
+    }
   }
 ];
 
@@ -217,6 +244,12 @@ export async function handleToolUse(toolUse: ToolUse): Promise<string> {
         break;
       case 'governing_law_verifier':
         result = await governingLawVerifier(input.text);
+        break;
+      case 'missing_clause_detector':
+        result = await missingClauseDetector(input.text, input.contract_type);
+        break;
+      case 'todo_manager':
+        result = await todoManager(input.action, input.item, input.id);
         break;
       default:
         console.log("Unknown tool:", name);
@@ -411,4 +444,92 @@ async function signatureBlockFormatter(text: string): Promise<string> {
 
 async function governingLawVerifier(text: string): Promise<string> {
   // Implementation for governing law verifier
+}
+
+async function missingClauseDetector(text: string, contractType: string): Promise<string> {
+  console.log("missingClauseDetector called for contract type:", contractType);
+  const detectionPrompt = `Analyze the following ${contractType} contract and identify any standard clauses that are missing. Provide a list of missing clauses and brief explanations for why they are typically included in this type of contract.
+
+  Contract text:
+  ${text}
+
+  Please return the result as a JSON object with the following structure:
+  {
+    "missing_clauses": [
+      {
+        "clause_name": "Name of the missing clause",
+        "explanation": "Brief explanation of why this clause is typically included"
+      }
+    ]
+  }`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20240620",
+      max_tokens: 4000,
+      temperature: 0.2,
+      system: "You are a legal expert AI assistant. Analyze legal contracts and identify missing standard clauses based on the contract type.",
+      messages: [{ role: "user", content: detectionPrompt }],
+    }) as AnthropicResponse;
+    
+    if (response.content && response.content[0] && response.content[0].text) {
+      const missingClauses = JSON.parse(response.content[0].text);
+      console.log("Missing clauses detected:", JSON.stringify(missingClauses, null, 2));
+      return JSON.stringify(missingClauses, null, 2);
+    } else {
+      console.error("Unexpected response structure:", JSON.stringify(response, null, 2));
+      return JSON.stringify({ error: "Unexpected response structure" }, null, 2);
+    }
+  } catch (error) {
+    console.error("Error detecting missing clauses:", error);
+    return JSON.stringify({ error: "Failed to detect missing clauses", details: error instanceof Error ? error.message : String(error) }, null, 2);
+  }
+}
+
+async function todoManager(action: string, item?: string, id?: string): Promise<string> {
+  const todoFilePath = path.join(process.cwd(), 'todos.json');
+
+  async function readTodos(): Promise<{ id: string; item: string }[]> {
+    try {
+      const data = await fs.readFile(todoFilePath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async function writeTodos(todos: { id: string; item: string }[]): Promise<void> {
+    await fs.writeFile(todoFilePath, JSON.stringify(todos, null, 2), 'utf-8');
+  }
+
+  const todos = await readTodos();
+
+  switch (action) {
+    case 'add':
+      if (!item) {
+        return JSON.stringify({ error: "Item is required for 'add' action" });
+      }
+      const newId = Date.now().toString();
+      todos.push({ id: newId, item });
+      await writeTodos(todos);
+      return JSON.stringify({ message: "Todo item added", id: newId });
+
+    case 'list':
+      return JSON.stringify(todos);
+
+    case 'remove':
+      if (!id) {
+        return JSON.stringify({ error: "ID is required for 'remove' action" });
+      }
+      const index = todos.findIndex(todo => todo.id === id);
+      if (index === -1) {
+        return JSON.stringify({ error: "Todo item not found" });
+      }
+      todos.splice(index, 1);
+      await writeTodos(todos);
+      return JSON.stringify({ message: "Todo item removed" });
+
+    default:
+      return JSON.stringify({ error: "Invalid action. Use 'add', 'list', or 'remove'." });
+  }
 }
