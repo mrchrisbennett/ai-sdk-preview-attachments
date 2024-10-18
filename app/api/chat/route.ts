@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { StreamingTextResponse, Message } from 'ai';
 import { AnthropicStream } from 'ai';
-import { tools, handleToolUse } from '../../../src/utils/agent';
+import { tools, handleToolUse, ToolUse } from '../../../src/utils/agent';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
