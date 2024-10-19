@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { StreamingTextResponse, Message } from 'ai';
-import { AnthropicStream } from 'ai';
-import { tools, handleToolUse, ToolUse } from '../../../src/utils/agent';
+import { AnthropicStream, AnthropicStreamCallbacks } from 'ai';
+import { tools, handleToolUse } from '../../../src/utils/agent';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -28,6 +28,7 @@ The plan should look like this (but include however many steps you need, up to 1
 1. Step 1
 2. Step 2
 3. Step 3
+etc.
 
 When using the missing_clause_detector tool, make sure to specify the contract type based on the context of the legal document being analyzed.
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     let isCollectingToolCall = false;
     let shouldSkipTokens = false;
 
-    const callbacks = {
+    const callbacks: AnthropicStreamCallbacks = {
       onStart: () => {
         console.log("Stream started");
       },
