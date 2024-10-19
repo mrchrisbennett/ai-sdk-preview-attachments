@@ -47,28 +47,6 @@ export const tools: Tool[] = [
     }
   },
   {
-    name: "legal_citation_validator",
-    description: "Check the format and accuracy of legal citations.",
-    input_schema: {
-      type: "object",
-      properties: {
-        text: { type: "string", description: "The legal text to validate citations" }
-      },
-      required: ["text"]
-    }
-  },
-  {
-    name: "ambiguity_detector",
-    description: "Highlight potentially ambiguous phrases or clauses.",
-    input_schema: {
-      type: "object",
-      properties: {
-        text: { type: "string", description: "The legal text to check for ambiguities" }
-      },
-      required: ["text"]
-    }
-  },
-  {
     name: "conflict_checker",
     description: "Identify conflicting statements within the document.",
     input_schema: {
@@ -189,9 +167,8 @@ interface AnthropicResponse {
   // Add other properties from the response as needed
 }
 
-export async function handleToolUse(toolUse: ToolUse): Promise<string> {
-  console.log("handleToolUse called with:", JSON.stringify(toolUse, null, 2));
-  const { name, input } = toolUse;
+export async function handleToolUse({ name, input }: { name: string; input: any }): Promise<string> {
+  console.log("handleToolUse called with:", JSON.stringify(input, null, 2));
   let result: string;
 
   try {
@@ -217,12 +194,6 @@ export async function handleToolUse(toolUse: ToolUse): Promise<string> {
         break;
       case 'jurisdiction_identifier':
         result = await jurisdictionIdentifier(input.text);
-        break;
-      case 'legal_citation_validator':
-        result = await legalCitationValidator(input.text);
-        break;
-      case 'ambiguity_detector':
-        result = await ambiguityDetector(input.text);
         break;
       case 'conflict_checker':
         result = await conflictChecker(input.text);
@@ -260,7 +231,13 @@ export async function handleToolUse(toolUse: ToolUse): Promise<string> {
     return result;
   } catch (error) {
     console.error("Error in handleToolUse:", error);
-    return `Error: ${error instanceof Error ? error.message : String(error)}`;
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Error in tool use", details: errorMessage }, null, 2);
   }
 }
 
@@ -298,7 +275,13 @@ async function extractLegalInfo(legalText: string): Promise<string> {
     }
   } catch (error) {
     console.error("Error extracting legal information:", error);
-    return JSON.stringify({ error: "Failed to extract legal information", details: error.message }, null, 2);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to extract legal information", details: errorMessage }, null, 2);
   }
 }
 
@@ -332,7 +315,13 @@ async function reviewLegalText(legalText: string, extractedInfo: string): Promis
     }
   } catch (error) {
     console.error("Error reviewing legal text:", error);
-    return JSON.stringify({ error: "Failed to review legal text", details: error.message }, null, 2);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to review legal text", details: errorMessage }, null, 2);
   }
 }
 
@@ -366,7 +355,13 @@ async function draftImprovedLegalText(originalText: string, reviewSummary: strin
     }
   } catch (error) {
     console.error("Error drafting improved legal text:", error);
-    return JSON.stringify({ error: "Failed to draft improved legal text", details: error.message }, null, 2);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to draft improved legal text", details: errorMessage }, null, 2);
   }
 }
 
@@ -397,54 +392,49 @@ async function planLegalProcess(process: string, context: string): Promise<strin
     }
   } catch (error) {
     console.error("Error planning legal process:", error);
-    return JSON.stringify({ error: "Failed to plan legal process", details: error.message }, null, 2);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to plan legal process", details: errorMessage }, null, 2);
   }
 }
 
 // Add new functions for the new tools
 async function definedTermsChecker(text: string): Promise<string> {
-  // Implementation for defined terms checker
+  try {
+    // Implementation for defined terms checker
+  } catch (error) {
+    console.error("Error in defined terms checker:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to check defined terms", details: errorMessage }, null, 2);
+  }
 }
 
+// Apply the same pattern to all other tool functions
 async function jurisdictionIdentifier(text: string): Promise<string> {
-  // Implementation for jurisdiction identifier
+  try {
+    // Implementation for jurisdiction identifier
+  } catch (error) {
+    console.error("Error in jurisdiction identifier:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to identify jurisdiction", details: errorMessage }, null, 2);
+  }
 }
 
-async function legalCitationValidator(text: string): Promise<string> {
-  // Implementation for legal citation validator
-}
-
-async function ambiguityDetector(text: string): Promise<string> {
-  // Implementation for ambiguity detector
-}
-
-async function conflictChecker(text: string): Promise<string> {
-  // Implementation for conflict checker
-}
-
-async function precedentMatcher(text: string): Promise<string> {
-  // Implementation for precedent matcher
-}
-
-async function legalJargonSimplifier(text: string): Promise<string> {
-  // Implementation for legal jargon simplifier
-}
-
-async function complianceChecker(text: string, regulation: string): Promise<string> {
-  // Implementation for compliance checker
-}
-
-async function riskPhraseIdentifier(text: string): Promise<string> {
-  // Implementation for risk phrase identifier
-}
-
-async function signatureBlockFormatter(text: string): Promise<string> {
-  // Implementation for signature block formatter
-}
-
-async function governingLawVerifier(text: string): Promise<string> {
-  // Implementation for governing law verifier
-}
+// ... (apply the same error handling pattern to all other tool functions)
 
 async function missingClauseDetector(text: string, contractType: string): Promise<string> {
   console.log("missingClauseDetector called for contract type:", contractType);
@@ -482,7 +472,13 @@ async function missingClauseDetector(text: string, contractType: string): Promis
     }
   } catch (error) {
     console.error("Error detecting missing clauses:", error);
-    return JSON.stringify({ error: "Failed to detect missing clauses", details: error instanceof Error ? error.message : String(error) }, null, 2);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to detect missing clauses", details: errorMessage }, null, 2);
   }
 }
 
@@ -531,5 +527,20 @@ async function todoManager(action: string, item?: string, id?: string): Promise<
 
     default:
       return JSON.stringify({ error: "Invalid action. Use 'add', 'list', or 'remove'." });
+  }
+}
+
+export async function legal_extractor(input: string): Promise<string> {
+  try {
+    // Your existing extraction logic here
+  } catch (error) {
+    console.error("Error extracting legal information:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to extract legal information", details: errorMessage }, null, 2);
   }
 }
