@@ -148,6 +148,17 @@ export const tools: Tool[] = [
       },
       required: ["action"]
     }
+  },
+  {
+    name: "extract_legal_info",
+    description: "Extract key information from legal text, including clause type and defined terms.",
+    input_schema: {
+      type: "object",
+      properties: {
+        text: { type: "string", description: "The legal text to analyze" }
+      },
+      required: ["text"]
+    }
   }
 ];
 
@@ -167,6 +178,76 @@ interface AnthropicResponse {
   // Add other properties from the response as needed
 }
 
+// Add this interface to define the structure of the extracted legal info
+interface LegalClause {
+  text: string;
+  clause_type: "contract" | "amendment" | "warranty" | "indemnification" | "dispute_resolution" | "termination" | "confidentiality";
+  clauses?: Array<{
+    term: string;
+    definition: string;
+  }>;
+}
+
+// Modify the extractLegalInfo function
+async function extractLegalInfo(legalText: string): Promise<string> {
+  console.log("extractLegalInfo called with text:", legalText);
+  const extractionPrompt = `Extract key information from the following legal text and return it as a JSON object with the following structure:
+  {
+    "text": "The full text of the clause",
+    "clause_type": "One of: contract, amendment, warranty, indemnification, dispute_resolution, termination, confidentiality",
+    "clauses": [
+      {
+        "term": "A defined term in the clause",
+        "definition": "The definition of the term"
+      }
+    ]
+  }
+
+  Legal text:
+  ${legalText}
+
+  Please ensure the output is a valid JSON object that matches the structure above.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20240620",
+      max_tokens: 4000,
+      temperature: 0,
+      system: "You are a legal expert AI assistant. Extract key information from legal texts and return it as a structured JSON object.",
+      messages: [{ role: "user", content: extractionPrompt }],
+    }) as AnthropicResponse;
+    
+    if (response.content && response.content[0] && response.content[0].text) {
+      try {
+        const extractedInfo: LegalClause = JSON.parse(response.content[0].text);
+        console.log("Parsed extracted info:", JSON.stringify(extractedInfo, null, 2));
+        
+        // Store the extracted info in a global variable for other tools to access
+        global.extractedLegalInfo = extractedInfo;
+        
+        // Return the JSON string
+        return JSON.stringify(extractedInfo, null, 2);
+      } catch (parseError) {
+        console.error("Error parsing JSON from AI response:", parseError);
+        return JSON.stringify({ error: "Failed to parse AI response as JSON", details: response.content[0].text }, null, 2);
+      }
+    } else {
+      console.error("Unexpected response structure:", JSON.stringify(response, null, 2));
+      return JSON.stringify({ error: "Unexpected response structure" }, null, 2);
+    }
+  } catch (error) {
+    console.error("Error extracting legal information:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return JSON.stringify({ error: "Failed to extract legal information", details: errorMessage }, null, 2);
+  }
+}
+
+// Modify the handleToolUse function to include the new extractLegalInfo functionality
 export async function handleToolUse({ name, input }: { name: string; input: any }): Promise<string> {
   console.log("handleToolUse called with:", JSON.stringify(input, null, 2));
   let result: string;
@@ -176,6 +257,8 @@ export async function handleToolUse({ name, input }: { name: string; input: any 
       case 'extract_legal_info':
         console.log("Extracting legal info from:", input.text);
         result = await extractLegalInfo(input.text);
+        // Wrap the result in a special marker for easy parsing
+        result = `[TOOL_RESULT]${result}[/TOOL_RESULT]`;
         break;
       case 'review_legal_text':
         console.log("Reviewing legal text:", input.text);
@@ -237,51 +320,7 @@ export async function handleToolUse({ name, input }: { name: string; input: any 
     } else if (typeof error === 'string') {
       errorMessage = error;
     }
-    return JSON.stringify({ error: "Error in tool use", details: errorMessage }, null, 2);
-  }
-}
-
-async function extractLegalInfo(legalText: string): Promise<string> {
-  console.log("extractLegalInfo called with text:", legalText);
-  const extractionPrompt = `Extract key information from the following legal text and return it as a JSON object with the following structure:
-  {
-    "parties": [],
-    "terms": [],
-    "dates": [],
-    "obligations": []
-  }
-
-  Legal text:
-  ${legalText}
-
-  Please ensure the output is a valid JSON object.`;
-
-  try {
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
-      max_tokens: 4000,
-      temperature: 0,
-      system: "You are a legal expert AI assistant. Extract key information from legal texts and return it as a structured JSON object.",
-      messages: [{ role: "user", content: extractionPrompt }],
-    }) as AnthropicResponse;
-    
-    if (response.content && response.content[0] && response.content[0].text) {
-      const extractedInfo = JSON.parse(response.content[0].text);
-      console.log("Parsed extracted info:", JSON.stringify(extractedInfo, null, 2));
-      return JSON.stringify(extractedInfo, null, 2);
-    } else {
-      console.error("Unexpected response structure:", JSON.stringify(response, null, 2));
-      return JSON.stringify({ error: "Unexpected response structure" }, null, 2);
-    }
-  } catch (error) {
-    console.error("Error extracting legal information:", error);
-    let errorMessage = "Unknown error";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (typeof error === 'string') {
-      errorMessage = error;
-    }
-    return JSON.stringify({ error: "Failed to extract legal information", details: errorMessage }, null, 2);
+    return `[TOOL_RESULT]${JSON.stringify({ error: "Error in tool use", details: errorMessage }, null, 2)}[/TOOL_RESULT]`;
   }
 }
 
@@ -543,4 +582,22 @@ export async function legal_extractor(input: string): Promise<string> {
     }
     return JSON.stringify({ error: "Failed to extract legal information", details: errorMessage }, null, 2);
   }
+}
+
+// Add a function to get the extracted legal info
+export function getExtractedLegalInfo(): LegalClause | null {
+  return global.extractedLegalInfo || null;
+}
+
+async function someOtherTool(input: string): Promise<string> {
+  const extractedInfo = getExtractedLegalInfo();
+  if (extractedInfo) {
+    // Use the extracted info in your tool's logic
+    console.log("Using extracted legal info:", extractedInfo);
+    // ... (tool implementation)
+  } else {
+    console.log("No extracted legal info available");
+    // ... (handle the case when no info is available)
+  }
+  // ... (rest of the tool implementation)
 }
