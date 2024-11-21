@@ -210,7 +210,7 @@ async function extractLegalInfo(legalText: string): Promise<string> {
 
   try {
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
+      model: "claude-3-5-sonnet-latest",
       max_tokens: 4000,
       temperature: 0,
       system: "You are a legal expert AI assistant. Extract key information from legal texts and return it as a structured JSON object.",
